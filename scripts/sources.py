@@ -17,6 +17,6 @@ def www_files_as_routes(dest_path):
                 dest.write(f'    {{"/{file}"sv, "GET"sv, [](WiFiClient& client, HttpRequest& request) {{ serve_static(client, request, "{dump_data(data)}"sv); }}}},\n')
 
 dest_folder = env.subst("$BUILD_DIR")+'/generated'
-os.mkdir(dest_folder)
+os.makedirs(dest_folder, exist_ok=True)
 www_files_as_routes(dest_folder+'/static_routes.h')
 env.Append(CPPPATH=[dest_folder])
