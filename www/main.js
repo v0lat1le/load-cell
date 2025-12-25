@@ -52,6 +52,9 @@ async function fetchData(uri, handler) {
 
 async function fetchSettings(uri) {
     let response = await fetch(uri);
+    if (!response.ok) {
+        throw new Error("failed to get " + uri);
+    }
     return response.text().then(text => new URLSearchParams(text))
 }
 
@@ -63,19 +66,24 @@ async function refreshSettings() {
     }
 }
 
+const data = new Data();
+let offset = 0.0;
+let scale = 1.0;
+let maxValue = 0.0;
+let updatePending = false;
+
 function applyCalibration() {
-    const offset = calibrationOffsetInput.valueAsNumber;
-    const scale = calibrationScaleInput.valueAsNumber;
+    offset = calibrationOffsetInput.valueAsNumber;
+    scale = calibrationScaleInput.valueAsNumber;
     updateLiveGraph();
     localStorage.setItem("calibration-offset", offset);
     localStorage.setItem("calibration-scale", scale);
 }
 
-const data = new Data();
-let offset = 0.0;
-let scale = 1.0;
-let maxValue = 0.0;
-let dirty = true;
+function resetCalibration() {
+    calibrationOffsetInput.value = offset
+    calibrationScaleInput.value = scale
+}
 
 function updateLiveGraph() {
     let idx = 0;
@@ -86,30 +94,18 @@ function updateLiveGraph() {
     dataGraphLine.setAttribute("points",  dataPointsStr);
     dataCurrentText.innerHTML = ((data.last()-offset)/scale).toFixed(2);
     dataMaxText.innerHTML = ((maxValue-offset)/scale).toFixed(2);
-    dirty = false;
+    updatePending = false;
 }
 
-function initDataView() {
-    document.getElementById("data-max-reset").onclick = () => { maxValue = offset; };
-
-    offset = localStorage.getItem("calibration-offset") || offset;
-    scale = localStorage.getItem("calibration-scale", ) || scale;
-
-    fetchData("/load.bin", (chunk) => {
-        data.write(chunk);
-        for (let value of chunk) {
-            if (value > maxValue) {
-                maxValue = value;
-            }
+function initNavigation() {
+    const showTab = (id) => {
+        for(const tab_id of ["data-tab", "calibration-tab", "settings-tab"]) {
+            document.getElementById(tab_id).style.display = (id == tab_id ? 'block' : 'none');
         }
-        if (!dirty) {
-            dirty = true;
-            window.requestAnimationFrame(updateLiveGraph);
-        }
-    });
-}
-
-function initCalibrationView() {
+    }
+    document.getElementById("nav-data-tab-show").onclick = () => { showTab("data-tab"); }
+    document.getElementById("nav-calibration-tab-show").onclick = () => { showTab("calibration-tab"); }
+    document.getElementById("nav-settings-tab-show").onclick = () => { showTab("settings-tab"); }
 }
 
 function initSettingsView() {
@@ -145,18 +141,33 @@ function initSettingsView() {
     });
 }
 
-function initNavigation() {
-    const showTab = (id) => {
-        for(const tab_id of ["data-tab", "calibration-tab", "settings-tab"]) {
-            document.getElementById(tab_id).style.display = id == tab_id ? 'block' : 'none';
+function initDataView() {
+    document.getElementById("data-max-reset").onclick = () => { maxValue = offset; };
+
+    offset = localStorage.getItem("calibration-offset") || offset;
+    scale = localStorage.getItem("calibration-scale", ) || scale;
+
+    fetchData("/load.bin", (chunk) => {
+        data.write(chunk);
+        for (let value of chunk) {
+            if (value > maxValue) {
+                maxValue = value;
+            }
         }
-    }
-    document.getElementById("nav-data-tab-show").onclick = () => { showTab("data-tab"); }
-    document.getElementById("nav-calibration-tab-show").onclick = () => { showTab("calibration-tab"); }
-    document.getElementById("nav-settings-tab-show").onclick = () => { showTab("settings-tab"); }
+        if (!updatePending) {
+            updatePending = true;
+            window.requestAnimationFrame(updateLiveGraph);
+        }
+    });
 }
 
+function initCalibrationView() {
+    document.getElementById("calibration-apply").onclick = applyCalibration;
+    document.getElementById("calibration-reset").onclick = resetCalibration;
+    resetCalibration();
+}
+
+initNavigation();
+initSettingsView();
 initDataView();
 initCalibrationView();
-initSettingsView();
-initNavigation();
