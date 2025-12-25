@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Load Cell</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="main.css">
+    <script type="module" src="main.js"></script>
+</head>
+<body>
+    <div id="nav">
+        <input type="button" value="Data" id="nav-data-tab-show"/><input type="button" value="Calibration" id="nav-calibration-tab-show"/><input type="button" value="Settings" id="nav-settings-tab-show"/>
+    </div>
+
+    <div id="data-tab">
+        <svg id="data-graph" width="100%" viewBox="0 0 480 120" xmlns="http://www.w3.org/2000/svg">
+            <polyline id="data-graph-trace" stroke="blue" stroke-width="0.8" fill="none" points=""/>
+        </svg>
+        <span>Current </span><span id="data-current">00.00</span>
+        <span>Max </span> <span id="data-max">00.00</span>
+        <button id="data-max-reset">Reset</button>
+    </div>
+
+    <div id="calibration-tab" style="display:none">
+        Nothing here yet!
+    </div>
+
+    <div id="settings-tab" style="display:none">
+        <form action="/settings" method="post" id="settings">
+            <div><label for="settings-ap-ssid">AP SSID: </label><input type="text" name="ap_ssid" id="settings-ap-ssid" required/></div>
+            <div><label for="settings-ap-pass">AP Pass: </label><input type="password" name="ap_pass" id="settings-ap-pass"/></div>
+            <div><label for="settings-st-ssid">ST SSID: </label><input type="text" name="st_ssid" id="settings-st-ssid" required/></div>
+            <div><label for="settings-st-pass">ST Pass: </label><input type="password" name="st_pass" id="settings-st-pass"/></div>
+            <div><label for="settings-wifi-power">WF Powr: </label><input type="number" min="0" max="82" name="wifi_power" id="settings-wifi-power" required/></div>
+            <div><input type="submit" value="Apply"/> <input type="button" value="Reset" id="settings-reset"/></div>
+        </form>
+        <div>Firmware Version: <span id="firware-version">0.0</span></div>
+        <div>Chip Vcc: <span id="chip-vcc">0.00v</span></div>
+        <input type="file" accept=".bin" id="firmware-update-file" style="display:none"/><input type="button" value="Upload Firmware" id="firmware-update"/>
+        <span id="firmware-update-status"></span>
+    </div>
+</body>
+</html>
