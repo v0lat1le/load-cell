@@ -1,41 +1,3 @@
-class Data {
-    rawData = new Int16Array(300);
-    writeIndex = 0;
-
-    write(chunk) {
-        if (chunk.length > this.rawData.length) {
-            chunk = chunk.subarray(chunk.length-this.rawData.length);
-        }
-        if (chunk.length < this.rawData.length-this.writeIndex) {
-            this.rawData.subarray(this.writeIndex).set(chunk);
-        } else {
-            this.rawData.subarray(this.writeIndex).set(chunk.subarray(0, this.rawData.length-this.writeIndex));
-            this.rawData.set(chunk.subarray(this.rawData.length-this.writeIndex));
-        }
-        this.writeIndex = (this.writeIndex + chunk.length)%this.rawData.length;
-    }
-
-    last() {
-        return this.rawData[(this.writeIndex + this.rawData.length - 1)%this.rawData.length];
-    }
-
-    *[Symbol.iterator]() {
-        for (let i=this.writeIndex; i<this.rawData.length; ++i) {
-            yield this.rawData[i];
-        }
-        for (let i=0; i<this.writeIndex; ++i) {
-            yield this.rawData[i];
-        }
-    }
-}
-
-/** @type {HTMLFormElement} */ const settingsForm = document.getElementById("settings");
-/** @type {HTMLInputElement} */ const calibrationOffsetInput = document.getElementById("calibration-offset");
-/** @type {HTMLInputElement} */ const calibrationScaleInput = document.getElementById("calibration-scale");
-/** @type {SVGLineElement} */ const dataGraphLine = document.getElementById("data-graph-trace");
-/** @type {HTMLElement} */ const dataCurrentText = document.getElementById("data-current");
-/** @type {HTMLElement} */ const dataMaxText = document.getElementById("data-max");
-
 async function fetchData(uri, handler) {
     let response = await fetch(uri);
     let reader = response.body.getReader();
@@ -50,57 +12,18 @@ async function fetchData(uri, handler) {
     }
 }
 
-async function fetchSettings(uri) {
+async function fetchParams(uri) {
     let response = await fetch(uri);
     if (!response.ok) {
-        throw new Error("failed to get " + uri);
+        throw new Error("failed to get params from " + uri);
     }
     return response.text().then(text => new URLSearchParams(text))
 }
 
-async function refreshSettings() {
-    const data = await fetchSettings("/settings");
-    for(const [key, val] of data.entries()) {
-        const input = settingsForm.elements[key];
-        input.value = val;
-    }
-}
-
-const data = new Data();
-let offset = 0.0;
-let scale = 1.0;
-let maxValue = 0.0;
-let updatePending = false;
-
-function applyCalibration() {
-    offset = calibrationOffsetInput.valueAsNumber;
-    scale = calibrationScaleInput.valueAsNumber;
-    updateLiveGraph();
-    localStorage.setItem("calibration-offset", offset);
-    localStorage.setItem("calibration-scale", scale);
-}
-
-function resetCalibration() {
-    calibrationOffsetInput.value = offset
-    calibrationScaleInput.value = scale
-}
-
-function updateLiveGraph() {
-    let idx = 0;
-    let dataPointsStr = "";
-    for (const v of data) {
-        dataPointsStr += (idx++)+","+((v-offset)/scale).toFixed(2)+" ";
-    }
-    dataGraphLine.setAttribute("points",  dataPointsStr);
-    dataCurrentText.innerHTML = ((data.last()-offset)/scale).toFixed(2);
-    dataMaxText.innerHTML = ((maxValue-offset)/scale).toFixed(2);
-    updatePending = false;
-}
-
 function initNavigation() {
     const showTab = (id) => {
-        for(const tab_id of ["data-tab", "calibration-tab", "settings-tab"]) {
-            document.getElementById(tab_id).style.display = (id == tab_id ? 'block' : 'none');
+        for(const tabId of ["data-tab", "calibration-tab", "settings-tab"]) {
+            document.getElementById(tabId).style.display = (id == tabId ? 'block' : 'none');
         }
     }
     document.getElementById("nav-data-tab-show").onclick = () => { showTab("data-tab"); }
@@ -109,6 +32,16 @@ function initNavigation() {
 }
 
 function initSettingsView() {
+    /** @type {HTMLFormElement} */ const settingsForm = document.getElementById("settings");
+
+    async function refreshSettings() {
+        const data = await fetchParams("/settings");
+        for(const [key, val] of data.entries()) {
+            const input = settingsForm.elements[key];
+            input.value = val;
+        }
+    }
+
     document.getElementById("settings-reset").onclick = refreshSettings;
     settingsForm.onsubmit = (event) => {
         event.preventDefault();
@@ -135,35 +68,88 @@ function initSettingsView() {
 
     refreshSettings();
 
-    fetchSettings("/system").then((data) => {
+    fetchParams("/system").then((data) => {
         document.getElementById("firware-version").innerText = data.get("fw_version");
         document.getElementById("chip-vcc").innerText = (parseInt(data.get("chip_vcc"))/100).toFixed(2)+"v";
     });
 }
 
+var offset = 0.0;
+var scale = 1.0;
+
 function initDataView() {
-    document.getElementById("data-max-reset").onclick = () => { maxValue = offset; };
+    /** @type {SVGSVGElement} */ const dataGraph = document.getElementById("data-graph");
+    /** @type {SVGPolylineElement} */ const dataGraphLine = document.getElementById("data-graph-trace");
+    /** @type {HTMLElement} */ const dataCurrentText = document.getElementById("data-current");
+    /** @type {HTMLElement} */ const dataMaxText = document.getElementById("data-max");
 
-    offset = localStorage.getItem("calibration-offset") || offset;
-    scale = localStorage.getItem("calibration-scale", ) || scale;
+    var x = 0;
+    function updateLiveGraph(chunk) {
+        const viewBox = dataGraph.viewBox.baseVal;
+        for (const v of chunk) {
+            const point = dataGraph.createSVGPoint();
+            point.x = ++x;
+            point.y = v;
+            dataGraphLine.points.appendItem(point);
+            if (dataGraphLine.points.length > viewBox.width) {
+                dataGraphLine.points.removeItem(0);
+            }
+        }
+        const graphLineMatrix = dataGraph.createSVGMatrix();
+        graphLineMatrix.d = -1;
+        graphLineMatrix.e = viewBox.x+viewBox.width-x;
+        graphLineMatrix.f = viewBox.y+viewBox.height;
+        dataGraphLine.transform.baseVal.replaceItem(dataGraphLine.transform.baseVal.createSVGTransformFromMatrix(graphLineMatrix), 0);
+    }
 
-    fetchData("/load.bin", (chunk) => {
-        data.write(chunk);
+    function updateLiveView(chunk) {
+        updateLiveGraph(chunk);
         for (let value of chunk) {
             if (value > maxValue) {
                 maxValue = value;
             }
         }
-        if (!updatePending) {
-            updatePending = true;
-            window.requestAnimationFrame(updateLiveGraph);
-        }
-    });
+        dataCurrentText.textContent = ((chunk[chunk.length-1]+offset)/scale).toFixed(2);
+        dataMaxText.textContent = ((maxValue+offset)/scale).toFixed(2);
+    }
+
+    offset = parseFloat(localStorage.getItem("calibration-offset")) || 0.0;
+    scale = parseFloat(localStorage.getItem("calibration-scale")) || 1.0;
+
+    let maxValue = offset;
+    document.getElementById("data-max-reset").onclick = () => {
+        maxValue = offset; 
+        dataMaxText.textContent = "0.00";
+    };
+
+    dataGraphLine.transform.baseVal.appendItem(dataGraph.createSVGTransformFromMatrix(dataGraph.createSVGMatrix()));
+    const calibrationMatrix = dataGraph.createSVGMatrix();
+    calibrationMatrix.d = 1.0/scale;
+    calibrationMatrix.f = -offset*calibrationMatrix.d;
+    dataGraphLine.transform.baseVal.appendItem(dataGraph.createSVGTransformFromMatrix(calibrationMatrix));
+
+    fetchData("/load.bin", updateLiveView);
 }
 
 function initCalibrationView() {
+    /** @type {HTMLInputElement} */ const calibrationOffsetInput = document.getElementById("calibration-offset");
+    /** @type {HTMLInputElement} */ const calibrationScaleInput = document.getElementById("calibration-scale");
+
+    function applyCalibration() {
+        offset = calibrationOffsetInput.valueAsNumber;
+        scale = calibrationScaleInput.valueAsNumber;
+        localStorage.setItem("calibration-offset", offset);
+        localStorage.setItem("calibration-scale", scale);
+    }
+
+    function resetCalibration() {
+        calibrationOffsetInput.value = offset
+        calibrationScaleInput.value = scale
+    }
+
     document.getElementById("calibration-apply").onclick = applyCalibration;
     document.getElementById("calibration-reset").onclick = resetCalibration;
+    
     resetCalibration();
 }
 

@@ -4,8 +4,60 @@
     <meta charset="UTF-8"/>
     <title>Load Cell</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <link rel="stylesheet" href="main.css">
     <script type="module" src="main.js"></script>
+    <style>
+        :root {
+            font-size: 62.5%;
+            --grayscale-50: #f8f8f8;
+            --grayscale-100: #eaeaea;
+            --grayscale-200: #d8d8d8;
+            --grayscale-300: #bababa;
+            --grayscale-400: #aaaaaa;
+            --grayscale-500: #9b9b9b;
+            --grayscale-600: #666666;
+            --grayscale-700: #565656;
+            --grayscale-800: #474747;
+            --grayscale-900: #2d2d2d;
+            --grayscale-1000: #1e1e1e;
+            --grayscale-1100: #101010;
+            }
+        body {
+            font-family: monospace;
+            font-size: 1.8rem;
+            line-height: 1.6;
+            max-width: 38em;
+            margin: auto;
+            color: var(--grayscale-200);
+            background-color: var(--grayscale-1100);
+        }
+        input,
+        textarea,
+        select {
+            font-family: monospace;
+            font-size: 90%;
+            color: var(--grayscale-300);
+            background-color: var(--grayscale-1100);
+            border: 1px solid var(--grayscale-900);
+        }
+        input:focus {
+            outline: none;
+            color: var(--grayscale-200);
+            background-color: var(--grayscale-1000);
+            border-color: var(--grayscale-800);
+        }
+        button {
+            font-family: monospace;
+            font-size: 90%;
+            color: var(--grayscale-200);
+            background-color: var(--grayscale-1000);
+            border: 1px solid var(--grayscale-800);
+        }
+        button:hover {
+            color: var(--grayscale-100);
+            background-color: var(--grayscale-900);
+            border-color: var(--grayscale-700);
+        }
+    </style>
 </head>
 <body>
     <div id="nav">
@@ -13,8 +65,8 @@
     </div>
 
     <div id="data-tab">
-        <svg id="data-graph" width="100%" viewBox="0 0 480 160" xmlns="http://www.w3.org/2000/svg">
-            <polyline id="data-graph-trace" stroke="blue" stroke-width="0.8" fill="none" points=""/>
+        <svg id="data-graph" width="100%" viewBox="0 0 480 160">
+            <polyline id="data-graph-trace" stroke="blue" stroke-width="1" fill="none" vector-effect="non-scaling-stroke"/>
         </svg>
         <span>Current </span><span id="data-current">00.00</span>
         <span>Max </span> <span id="data-max">00.00</span>
