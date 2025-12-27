@@ -319,7 +319,7 @@ void handle_update() {
 
 void collect_data() {
     if (load_cell.is_ready() && buffer_filled < buffer.size()) {
-        buffer[buffer_filled++] = load_cell.read() >> 8;  // low bits are noise
+        buffer[buffer_filled++] = load_cell.read() >> 6;  // low bits are noise
     }
 }
 
