@@ -65,11 +65,46 @@
     </div>
 
     <div id="data-tab">
-        <svg id="data-graph" width="100%" viewBox="0 0 480 160">
-            <polyline id="data-graph-trace" stroke="blue" stroke-width="1" fill="none" vector-effect="non-scaling-stroke"/>
+        <svg id="data-graph" width="100%" viewBox="0 -5 240 120" style="font-size: 0.5rem">
+            <g transform="translate(0, 110) scale(1, -1)">
+                <line x1="0%" x2="100%" y1="0" y2="0" stroke="gray" stroke-width="0.5" vector-effect="non-scaling-stroke"/>
+                <line x1="0%" x2="100%" y1="10" y2="10" stroke="gray" stroke-width="0.25" vector-effect="non-scaling-stroke"/>
+                <line x1="0%" x2="100%" y1="20" y2="20" stroke="gray" stroke-width="0.5" vector-effect="non-scaling-stroke"/>
+                <line x1="0%" x2="100%" y1="30" y2="30" stroke="gray" stroke-width="0.25" vector-effect="non-scaling-stroke"/>
+                <line x1="0%" x2="100%" y1="40" y2="40" stroke="gray" stroke-width="0.5" vector-effect="non-scaling-stroke"/>
+                <line x1="0%" x2="100%" y1="50" y2="50" stroke="gray" stroke-width="0.25" vector-effect="non-scaling-stroke"/>
+                <line x1="0%" x2="100%" y1="60" y2="60" stroke="gray" stroke-width="0.5" vector-effect="non-scaling-stroke"/>
+                <line x1="0%" x2="100%" y1="70" y2="70" stroke="gray" stroke-width="0.25" vector-effect="non-scaling-stroke"/>
+                <line x1="0%" x2="100%" y1="80" y2="80" stroke="gray" stroke-width="0.5" vector-effect="non-scaling-stroke"/>
+                <line x1="0%" x2="100%" y1="90" y2="90" stroke="gray" stroke-width="0.25" vector-effect="non-scaling-stroke"/>
+                <line x1="0%" x2="100%" y1="100" y2="100" stroke="gray" stroke-width="0.5" vector-effect="non-scaling-stroke"/>
+                <line x1="0%" x2="100%" y1="110" y2="110" stroke="gray" stroke-width="0.25" vector-effect="non-scaling-stroke"/>
+
+                <polyline id="data-graph-trace" stroke="blue" stroke-width="1" fill="none" vector-effect="non-scaling-stroke"/>
+
+                <line id="data-graph-max-line" x1="0%" x2="100%" y1="0" y2="0" stroke="red" stroke-width="1" vector-effect="non-scaling-stroke"/>
+                <line id="data-graph-current-line" x1="0%" x2="100%" y1="0" y2="0" stroke="yellow" stroke-width="1" vector-effect="non-scaling-stroke"/>
+
+                <g transform="scale(1, -1)">
+                    <text x="0%" y="-1"  fill="gray"> 0</text>
+                    <text x="0%" y="-11" fill="gray">10</text>
+                    <text x="0%" y="-21" fill="gray">20</text>
+                    <text x="0%" y="-31" fill="gray">30</text>
+                    <text x="0%" y="-41" fill="gray">40</text>
+                    <text x="0%" y="-51" fill="gray">50</text>
+                    <text x="0%" y="-61" fill="gray">60</text>
+                    <text x="0%" y="-71" fill="gray">70</text>
+                    <text x="0%" y="-81" fill="gray">80</text>
+                    <text x="0%" y="-91" fill="gray">90</text>
+                    <text x="0%" y="-101" fill="gray">100</text>
+                    <text id="data-graph-max" x="50%" y="-1" text-anchor="middle" fill="red">0.0</text>
+                    <text id="data-graph-current" x="50%" y="-1" text-anchor="middle" fill="yellow">0.0</text>
+                </g>
+
+            </g>
         </svg>
-        <span>Current </span><span id="data-current">00.00</span>
-        <span>Max </span> <span id="data-max">00.00</span>
+        <span>Current </span><pre id="data-current" style="display:inline"> 00.00</pre>
+        <span>Max </span><pre id="data-max" style="display:inline"> 00.00</pre>
         <button id="data-max-reset">Reset</button>
     </div>
 
