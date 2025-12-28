@@ -34,7 +34,7 @@
         textarea,
         select {
             font-family: monospace;
-            font-size: 90%;
+            font-size: calc(1.8rem - 2px);
             color: var(--grayscale-300);
             background-color: var(--grayscale-1100);
             border: 1px solid var(--grayscale-900);
@@ -47,7 +47,7 @@
         }
         button {
             font-family: monospace;
-            font-size: 90%;
+            font-size: calc(1.8rem - 2px);
             color: var(--grayscale-200);
             background-color: var(--grayscale-1000);
             border: 1px solid var(--grayscale-800);
@@ -60,12 +60,16 @@
     </style>
 </head>
 <body>
-    <div id="nav">
-        <input type="button" value="Data" id="nav-data-tab-show"/><input type="button" value="Calibration" id="nav-calibration-tab-show"/><input type="button" value="Settings" id="nav-settings-tab-show"/>
+    <div id="top-view">
+        <span>Pull </span><span id="data-current" style="white-space:pre"> 0.0</span>
+        <span>Max </span><span id="data-max" style="white-space:pre"> 0.0</span>
+        <button id="data-max-reset">X</button>
+
+        <button id="settings-view-toggle" style="float: right">O</button>
     </div>
 
-    <div id="data-tab">
-        <svg id="data-graph" width="100%" viewBox="0 -5 240 120" style="font-size: 0.5rem">
+    <div id="data-view">
+        <svg id="data-graph" viewBox="0 -5 240 120" style="font-size: 0.5rem; width: 100%; max-height: calc(100dvh - 40px)">
             <g transform="translate(0, 110) scale(1, -1)">
                 <line x1="0%" x2="100%" y1="0" y2="0" stroke="gray" stroke-width="0.5" vector-effect="non-scaling-stroke"/>
                 <line x1="0%" x2="100%" y1="10" y2="10" stroke="gray" stroke-width="0.25" vector-effect="non-scaling-stroke"/>
@@ -100,32 +104,28 @@
                     <text id="data-graph-max" x="50%" y="-1" text-anchor="middle" fill="red">0.0</text>
                     <text id="data-graph-current" x="50%" y="-1" text-anchor="middle" fill="yellow">0.0</text>
                 </g>
-
             </g>
         </svg>
-        <span>Current </span><pre id="data-current" style="display:inline"> 00.00</pre>
-        <span>Max </span><pre id="data-max" style="display:inline"> 00.00</pre>
-        <button id="data-max-reset">Reset</button>
     </div>
 
-    <div id="calibration-tab" style="display:none">
-        <div><label for="calibration-offset">Offset:</label><input type="number" id="calibration-offset"/></div>
-        <div><label for="calibration-scale">Scale: </label><input type="number" id="calibration-scale"/></div>
-        <div><input type="button" value="Apply" id="calibration-apply"/> <input type="button" value="Reset" id="calibration-reset"/></div>
-    </div>
-
-    <div id="settings-tab" style="display:none">
+    <div id="settings-view" style="display:none">
+        <br/>
+        <div><label for="calibration-offset">Offset:</label><input type="number" step="0.5" id="calibration-offset"/></div>
+        <div><label for="calibration-scale">Scale: </label><input type="number" step="0.01" id="calibration-scale"/></div>
+        <div><button id="calibration-apply">Apply</button> <button id="calibration-reset">Reset</button></div>
+        <br/>
         <form action="/settings" method="post" id="settings">
             <div><label for="settings-ap-ssid">AP SSID: </label><input type="text" name="ap_ssid" id="settings-ap-ssid" required/></div>
             <div><label for="settings-ap-pass">AP Pass: </label><input type="password" name="ap_pass" id="settings-ap-pass"/></div>
             <div><label for="settings-st-ssid">ST SSID: </label><input type="text" name="st_ssid" id="settings-st-ssid" required/></div>
             <div><label for="settings-st-pass">ST Pass: </label><input type="password" name="st_pass" id="settings-st-pass"/></div>
             <div><label for="settings-wifi-power">WiFi Db: </label><input type="number" min="0" max="82" name="wifi_power" id="settings-wifi-power" required/></div>
-            <div><input type="submit" value="Apply"/> <input type="button" value="Reset" id="settings-reset"/></div>
+            <div><button type="submit">Apply</button> <button id="settings-reset">Reset</button></div>
         </form>
+        <br/>
         <div>Firmware Version: <span id="firware-version">0.0</span></div>
         <div>Chip Vcc: <span id="chip-vcc">0.00v</span></div>
-        <input type="file" accept=".bin" id="firmware-update-file" style="display:none"/><input type="button" value="Upload Firmware" id="firmware-update"/>
+        <input type="file" accept=".bin" id="firmware-update-file" style="display:none"/><button id="firmware-update">Upload Firmware</button>
         <span id="firmware-update-status"></span>
     </div>
 </body>

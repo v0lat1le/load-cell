@@ -21,14 +21,17 @@ async function fetchParams(uri) {
 }
 
 function initNavigation() {
-    const showTab = (id) => {
-        for(const tabId of ["data-tab", "calibration-tab", "settings-tab"]) {
-            document.getElementById(tabId).style.display = (id == tabId ? 'block' : 'none');
-        }
-    }
-    document.getElementById("nav-data-tab-show").onclick = () => { showTab("data-tab"); }
-    document.getElementById("nav-calibration-tab-show").onclick = () => { showTab("calibration-tab"); }
-    document.getElementById("nav-settings-tab-show").onclick = () => { showTab("settings-tab"); }
+    /** @type {HTMLButtonElement} */ const settingsToggle = document.getElementById("settings-view-toggle");
+    /** @type {HTMLDivElement} */ const dataView = document.getElementById("data-view");
+    /** @type {HTMLDivElement} */ const settingsView = document.getElementById("settings-view");
+
+    var settingsOn = false;
+    settingsToggle.onclick = () => {
+        settingsOn = !settingsOn;
+        dataView.style.display = settingsOn ? 'none' : 'block';
+        settingsView.style.display = settingsOn ? 'block' : 'none';
+        settingsToggle.innerText = settingsOn ? "G" : "O";
+    };
 }
 
 function initSettingsView() {
@@ -48,29 +51,33 @@ function initSettingsView() {
         fetch("/settings", { method: "POST", body: new URLSearchParams(new FormData(settingsForm)) });
     };
 
+    refreshSettings();
+
     /** @type {HTMLInputElement} */ const firmwareUpdateFile = document.getElementById("firmware-update-file");
+    /** @type {HTMLSpanElement} */ const firmwareUpdateStatus = document.getElementById("firmware-update-status");
+
     document.getElementById("firmware-update").onclick = (event) => firmwareUpdateFile.click();
     firmwareUpdateFile.onchange = () => {
         if (firmwareUpdateFile.files.length == 0) {
             return;
         }
-        document.getElementById("firmware-update-status").textContent = "Uploading...";
+        firmwareUpdateStatus.textContent = "Uploading...";
         fetch("/system/firmware", { method: "POST", body: firmwareUpdateFile.files[0]})
             .then(() => {
                 firmwareUpdateFile.value = null;
-                document.getElementById("firmware-update-status").textContent = "Rebooting...";
+                firmwareUpdateStatus.textContent = "Rebooting...";
                 window.setTimeout(() => window.location.reload(), 5)
             }, () => {
                 firmwareUpdateFile.value = null;
-                document.getElementById("firmware-update-status").textContent = "Failed...";
+                firmwareUpdateStatus.textContent = "Failed...";
             });
     }
 
-    refreshSettings();
-
+    /** @type {HTMLElement} */ const firmwareVersion = document.getElementById("firmware-version");
+    /** @type {HTMLElement} */ const chipVcc = document.getElementById("chip-vcc");
     fetchParams("/system").then((data) => {
-        document.getElementById("firware-version").innerText = data.get("fw_version");
-        document.getElementById("chip-vcc").innerText = (parseInt(data.get("chip_vcc"))/100).toFixed(2)+"v";
+        firmwareVersion.innerText = data.get("fw_version");
+        chipVcc.innerText = (parseInt(data.get("chip_vcc"))/100).toFixed(2)+"v";
     });
 }
 
@@ -105,12 +112,6 @@ function initCalibrationView() {
 function initDataView() {
     /** @type {SVGSVGElement} */ const dataGraph = document.getElementById("data-graph");
     /** @type {SVGPolylineElement} */ const dataGraphLine = document.getElementById("data-graph-trace");
-    /** @type {SVGLineElement} */ const dataGraphMaxLine = document.getElementById("data-graph-max-line");
-    /** @type {SVGTextElement} */ const dataGraphMaxText = document.getElementById("data-graph-max");
-    /** @type {SVGLineElement} */ const dataGraphCurrentLine = document.getElementById("data-graph-current-line");
-    /** @type {SVGTextElement} */ const dataGraphCurrentText = document.getElementById("data-graph-current");
-    /** @type {HTMLElement} */ const dataCurrentText = document.getElementById("data-current");
-    /** @type {HTMLElement} */ const dataMaxText = document.getElementById("data-max");
 
     var x = 0;
     function updateLiveGraph(chunk) {
@@ -131,21 +132,29 @@ function initDataView() {
         dataGraphLine.transform.baseVal.initialize(dataGraph.createSVGTransformFromMatrix(graphLineMatrix));
     }
 
+    /** @type {SVGLineElement} */ const dataGraphMaxLine = document.getElementById("data-graph-max-line");
+    /** @type {SVGTextElement} */ const dataGraphMaxText = document.getElementById("data-graph-max");
+    /** @type {HTMLElement} */ const dataMaxText = document.getElementById("data-max");
+    /** @type {SVGLineElement} */ const dataGraphCurrentLine = document.getElementById("data-graph-current-line");
+    /** @type {SVGTextElement} */ const dataGraphCurrentText = document.getElementById("data-graph-current");
+    /** @type {HTMLElement} */ const dataCurrentText = document.getElementById("data-current");
+
     function updateLiveView(chunk) {
         updateLiveGraph(chunk);
+
         for (let value of chunk) {
             if (value > maxValue) {
                 maxValue = value;
             }
         }
         const calibratedCurrent = ((chunk[chunk.length-1]-offset)/scale);
-        dataCurrentText.textContent = calibratedCurrent.toFixed(2).padStart(6);
+        dataCurrentText.textContent = calibratedCurrent.toFixed(1).padStart(4);
         dataGraphCurrentLine.y1.baseVal.value = dataGraphCurrentLine.y2.baseVal.value = calibratedCurrent;
         dataGraphCurrentText.y.baseVal.getItem(0).value = -calibratedCurrent-1;
         dataGraphCurrentText.textContent = calibratedCurrent.toFixed(2);
 
         const calibratedMax = ((maxValue-offset)/scale);
-        dataMaxText.textContent = calibratedMax.toFixed(2).padStart(6, ' ');
+        dataMaxText.textContent = calibratedMax.toFixed(1).padStart(4);
         dataGraphMaxLine.y1.baseVal.value = dataGraphMaxLine.y2.baseVal.value = calibratedMax;
         dataGraphMaxText.y.baseVal.getItem(0).value = -calibratedMax-1;
         dataGraphMaxText.textContent = calibratedMax.toFixed(2);
