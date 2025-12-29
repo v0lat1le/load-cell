@@ -22,7 +22,7 @@ async function fetchParams(uri) {
 
 function initNavigation() {
     /** @type {HTMLButtonElement} */ const settingsToggle = document.getElementById("settings-view-toggle");
-    /** @type {HTMLDivElement} */ const dataView = document.getElementById("data-view");
+    /** @type {HTMLDivElement} */ const dataView = document.getElementById("data-graph");
     /** @type {HTMLDivElement} */ const settingsView = document.getElementById("settings-view");
 
     var settingsOn = false;
@@ -66,7 +66,7 @@ function initSettingsView() {
             .then(() => {
                 firmwareUpdateFile.value = null;
                 firmwareUpdateStatus.textContent = "Rebooting...";
-                window.setTimeout(() => window.location.reload(), 5)
+                window.setTimeout(() => window.location.reload(), 3000);
             }, () => {
                 firmwareUpdateFile.value = null;
                 firmwareUpdateStatus.textContent = "Failed...";
